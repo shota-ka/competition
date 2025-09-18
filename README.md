@@ -24,5 +24,11 @@
 ## 提供データ
 
 - function.py
+  - 作成用コード
 - main.py
+  - 実行用コード
 - draw.py
+  - 結果描写用コード
+  - main.py のコメントアウトを除去
+- train.json
+  - 確認用データ
