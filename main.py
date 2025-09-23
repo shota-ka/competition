@@ -1,8 +1,13 @@
 import function
 import json
+import argparse
 import draw
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--draw", help="draw figures", default=False)
+    args = parser.parse_args()
 
     file_path = "train.json"
 
@@ -17,4 +22,7 @@ if __name__ == '__main__':
         output.append(data_i.get('output', []))
 
     print(predict == output)
-    # draw.draw_map(predict, d)
+
+    if (args.draw):
+        for i, (predict_i) in enumerate(predict):
+            draw.draw_map(predict_i, i)
