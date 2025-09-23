@@ -1,12 +1,11 @@
 ## コンペ概要
 
 - 与えられた入力から提示された目的値へと変換するコードを作成
-- 入力と目的値のペアは複数（10個？）← 最大400個
 - 処理時間の短さで評価
 
 ### 参考
-- タスク内容:https://arcprize.org/play?task=007bbfb7
-- kaggle: https://www.kaggle.com/competitions/google-code-golf-2025/overview 
+- タスク内容: [リンク](https://arcprize.org/play?task=007bbfb7)
+- kaggle: [リンク](https://www.kaggle.com/competitions/google-code-golf-2025/overview)ß 
 
 ## 開催目的
 
@@ -29,6 +28,16 @@
   - 実行用コード
 - draw.py
   - 結果描写用コード
-  - main.py のコメントアウトを除去
 - train.json
   - 確認用データ
+
+## 試行方法
+
+実行コマンド
+```
+python main.py
+```
+出力結果を描写
+```
+python main.py --draw True
+```
