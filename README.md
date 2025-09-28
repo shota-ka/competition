@@ -4,7 +4,7 @@
 
 - 入力と目的値がセットになったデータが与えられる
 
-![]([image.pdf](https://github.com/shota-ka/competition/blob/main/image.png))
+![](image.png)
 
 - 入力から目的値を出力する関数（pythonプログラム）を作成する
 - 関数の呼び出しから出力までの処理時間を競う
