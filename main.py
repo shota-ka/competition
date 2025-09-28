@@ -2,8 +2,13 @@ import function
 import json
 import argparse
 import draw
+import timeit
 
 if __name__ == '__main__':
+
+    ######
+    loop = 1000
+    ######
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--draw", help="draw figures", default=False)
@@ -20,9 +25,15 @@ if __name__ == '__main__':
     output = []
     for d, (data_i) in enumerate(target_data):
         output.append(data_i.get('output', []))
-
-    print(predict == output)
+    
+    if (predict == output):
+        print("正解")
+    else:
+        print("不正解")
 
     if (args.draw):
         for i, (predict_i) in enumerate(predict):
             draw.draw_map(predict_i, i)
+    
+    result =  timeit.timeit('function.function(data)', globals=globals(), number=loop)
+    print(f"処理時間: {(result/loop)*1000000}µs")
