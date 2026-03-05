@@ -19,7 +19,9 @@ if __name__ == '__main__':
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    predict = function.function(data)
+    target_data = data.get("train", [])
+    
+    predict = function.function(target_data)
 
     target_data = data.get("train", [])
     output = []
