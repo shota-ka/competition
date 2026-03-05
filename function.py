@@ -15,21 +15,18 @@ class PredictionResponse(BaseModel):
         return v
 
 @app.post("/predict")
-def function(data: dict):
+def function(target_data):
 
     """
     Args:
-        data (dict): 以下の構造を持つ辞書:
-            - "train": データのリスト。各要素は辞書。
-                - "input": 画像の 2次元リスト (高さ H × 幅 W)。
-                           例: [[pixel, pixel, ...], [pixel, pixel, ...]]
-                - "output": 目的値(inputと同じ型) ※答え確認用
+        - "input": 画像の 2次元リスト (高さ H × 幅 W)。
+            例: [[pixel, pixel, ...], [pixel, pixel, ...]]
+        - "output": 目的値(inputと同じ型) ※答え確認用
 
     Returns:
         predict_result: 予測結果のリスト。予測結果(inputと同じ型)を順番に格納
     """
-
-    target_data = data.get("train", [])
+    
     predict_result = []
     for data_i in target_data:
         input = data_i.get('input', []) 
@@ -37,10 +34,11 @@ def function(data: dict):
 
         #ここを記入
 
-    try:
-        validated_data = PredictionResponse(predict=predict_result)
-    except ValidationError as e:
-        print("【predict_resultの型が違います】")
-        raise e
+    # predict_resultの型チェックが必要な方はコメントアウト
+    # try:
+    #     validated_data = PredictionResponse(predict=predict_result)
+    # except ValidationError as e:
+    #     print("【predict_resultの型が違います】")
+    #     raise e
     
     return predict_result
