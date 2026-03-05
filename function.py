@@ -21,10 +21,12 @@ def function(target_data):
     Args:
         - "input": 画像の 2次元リスト (高さ H × 幅 W)。
             例: [[pixel, pixel, ...], [pixel, pixel, ...]]
+            ※ pixelには、0, 3(壁) が入ります
         - "output": 目的値(inputと同じ型) ※答え確認用
 
     Returns:
         predict_result: 予測結果のリスト。予測結果(inputと同じ型)を順番に格納
+        ※塗りつぶす位置で、inputの0を4に変更
     """
     
     predict_result = []
