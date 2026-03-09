@@ -37,5 +37,5 @@ if __name__ == '__main__':
         for i, (predict_i) in enumerate(predict):
             draw.draw_map(predict_i, i)
     
-    result =  timeit.timeit('function.function(data)', globals=globals(), number=loop)
+    result =  timeit.timeit('function.function(target_data)', globals=globals(), number=loop)
     print(f"処理時間: {(result/loop)*1000000}µs")
