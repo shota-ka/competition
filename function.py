@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, field_validator, ValidationError
 from typing import List
+from collections import deque
 
 app = FastAPI()
 
@@ -34,7 +35,41 @@ def function(target_data):
         input = data_i.get('input', []) 
         # output = data_i.get('output', []) 
 
-        #ここを記入
+        if not input or not input[0]:
+            predict_result.append(input)
+            continue
+
+        height = len(input)
+        width = len(input[0])
+        predict = [row[:] for row in input]
+        outside = [[False] * width for _ in range(height)]
+        queue = deque()
+
+        for y in range(height):
+            for x in (0, width - 1):
+                if predict[y][x] == 0 and not outside[y][x]:
+                    outside[y][x] = True
+                    queue.append((y, x))
+
+        for x in range(width):
+            for y in (0, height - 1):
+                if predict[y][x] == 0 and not outside[y][x]:
+                    outside[y][x] = True
+                    queue.append((y, x))
+
+        while queue:
+            y, x = queue.popleft()
+            for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                if 0 <= ny < height and 0 <= nx < width and predict[ny][nx] == 0 and not outside[ny][nx]:
+                    outside[ny][nx] = True
+                    queue.append((ny, nx))
+
+        for y in range(height):
+            for x in range(width):
+                if predict[y][x] == 0 and not outside[y][x]:
+                    predict[y][x] = 4
+
+        predict_result.append(predict)
 
     # predict_resultの型チェックが必要な方はコメントアウト
     # try:
