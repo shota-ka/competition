@@ -1,81 +1,72 @@
-from fastapi import FastAPI
-from pydantic import BaseModel, field_validator, ValidationError
-from typing import List
 from collections import deque
+from typing import TypeAlias
+
+from fastapi import FastAPI
+from pydantic import BaseModel, RootModel
 
 app = FastAPI()
 
+Grid: TypeAlias = list[list[int]]
+
+
+class TaskData(BaseModel):
+    input: Grid
+    output: Grid | None = None
+
+
+class PredictionRequest(RootModel[list[TaskData]]):
+    pass
+
+
 class PredictionResponse(BaseModel):
-    predict: List[List[List[int]]]
+    predict: list[Grid]
 
-    @field_validator('predict')
-    @classmethod
-    def check_not_empty(cls, v):
-        if not v:
-            raise ValueError("predict must contain at least one element.")
-        return v
 
-@app.post("/predict")
-def function(target_data):
+def fill_enclosed_area(grid: Grid) -> Grid:
+    """Replace enclosed zeros with 4."""
+    if not grid or not grid[0]:
+        return grid
 
-    """
-    Args:
-        - "input": 画像の 2次元リスト (高さ H × 幅 W)。
-            例: [[pixel, pixel, ...], [pixel, pixel, ...]]
-            ※ pixelには、0, 3(壁) が入ります
-        - "output": 目的値(inputと同じ型) ※答え確認用
+    height = len(grid)
+    width = len(grid[0])
+    filled_grid = [row[:] for row in grid]
+    outside = [[False] * width for _ in range(height)]
+    queue = deque[tuple[int, int]]()
 
-    Returns:
-        predict_result: 予測結果のリスト。予測結果(inputと同じ型)を順番に格納
-        ※塗りつぶす位置で、inputの0を4に変更
-    """
-    
-    predict_result = []
-    for data_i in target_data:
-        input = data_i.get('input', []) 
-        # output = data_i.get('output', []) 
+    for y in range(height):
+        for x in (0, width - 1):
+            if filled_grid[y][x] == 0 and not outside[y][x]:
+                outside[y][x] = True
+                queue.append((y, x))
 
-        if not input or not input[0]:
-            predict_result.append(input)
-            continue
+    for x in range(width):
+        for y in (0, height - 1):
+            if filled_grid[y][x] == 0 and not outside[y][x]:
+                outside[y][x] = True
+                queue.append((y, x))
 
-        height = len(input)
-        width = len(input[0])
-        predict = [row[:] for row in input]
-        outside = [[False] * width for _ in range(height)]
-        queue = deque()
+    while queue:
+        y, x = queue.popleft()
+        for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+            if 0 <= ny < height and 0 <= nx < width and filled_grid[ny][nx] == 0 and not outside[ny][nx]:
+                outside[ny][nx] = True
+                queue.append((ny, nx))
 
-        for y in range(height):
-            for x in (0, width - 1):
-                if predict[y][x] == 0 and not outside[y][x]:
-                    outside[y][x] = True
-                    queue.append((y, x))
-
+    for y in range(height):
         for x in range(width):
-            for y in (0, height - 1):
-                if predict[y][x] == 0 and not outside[y][x]:
-                    outside[y][x] = True
-                    queue.append((y, x))
+            if filled_grid[y][x] == 0 and not outside[y][x]:
+                filled_grid[y][x] = 4
 
-        while queue:
-            y, x = queue.popleft()
-            for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
-                if 0 <= ny < height and 0 <= nx < width and predict[ny][nx] == 0 and not outside[ny][nx]:
-                    outside[ny][nx] = True
-                    queue.append((ny, nx))
+    return filled_grid
 
-        for y in range(height):
-            for x in range(width):
-                if predict[y][x] == 0 and not outside[y][x]:
-                    predict[y][x] = 4
 
-        predict_result.append(predict)
+def function(target_data: list[TaskData] | list[dict]) -> list[Grid]:
+    """Run prediction for each input grid."""
+    tasks = [task if isinstance(task, TaskData) else TaskData.model_validate(task) for task in target_data]
+    return [fill_enclosed_area(task.input) for task in tasks]
 
-    # predict_resultの型チェックが必要な方はコメントアウト
-    # try:
-    #     validated_data = PredictionResponse(predict=predict_result)
-    # except ValidationError as e:
-    #     print("【predict_resultの型が違います】")
-    #     raise e
-    
-    return predict_result
+
+@app.post("/predict", response_model=PredictionResponse)
+def predict(request: PredictionRequest) -> PredictionResponse:
+    """Run prediction for each input grid in the request body."""
+    return PredictionResponse(predict=function(request.root))
