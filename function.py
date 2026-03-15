@@ -26,37 +26,55 @@ def fill_enclosed_area(grid: Grid) -> Grid:
     if not grid or not grid[0]:
         return grid
 
-    height = len(grid)
-    width = len(grid[0])
     filled_grid = [row[:] for row in grid]
+    height = len(filled_grid)
+    width = len(filled_grid[0])
+    last_y = height - 1
+    last_x = width - 1
     stack: list[tuple[int, int]] = []
+    push = stack.append
+    pop = stack.pop
 
-    for y in range(height):
-        for x in (0, width - 1):
-            if filled_grid[y][x] == 0:
-                filled_grid[y][x] = -1
-                stack.append((y, x))
+    for y, row in enumerate(filled_grid):
+        if row[0] == 0:
+            row[0] = -1
+            push((y, 0))
+        if last_x and row[last_x] == 0:
+            row[last_x] = -1
+            push((y, last_x))
 
-    for x in range(width):
-        for y in (0, height - 1):
-            if filled_grid[y][x] == 0:
-                filled_grid[y][x] = -1
-                stack.append((y, x))
+    top_row = filled_grid[0]
+    if last_y:
+        bottom_row = filled_grid[last_y]
+        for x in range(width):
+            if top_row[x] == 0:
+                top_row[x] = -1
+                push((0, x))
+            if bottom_row[x] == 0:
+                bottom_row[x] = -1
+                push((last_y, x))
+    else:
+        for x in range(width):
+            if top_row[x] == 0:
+                top_row[x] = -1
+                push((0, x))
 
     while stack:
-        y, x = stack.pop()
+        y, x = pop()
         if y > 0 and filled_grid[y - 1][x] == 0:
             filled_grid[y - 1][x] = -1
-            stack.append((y - 1, x))
-        if y + 1 < height and filled_grid[y + 1][x] == 0:
+            push((y - 1, x))
+        if y < last_y and filled_grid[y + 1][x] == 0:
             filled_grid[y + 1][x] = -1
-            stack.append((y + 1, x))
-        if x > 0 and filled_grid[y][x - 1] == 0:
-            filled_grid[y][x - 1] = -1
-            stack.append((y, x - 1))
-        if x + 1 < width and filled_grid[y][x + 1] == 0:
-            filled_grid[y][x + 1] = -1
-            stack.append((y, x + 1))
+            push((y + 1, x))
+
+        row = filled_grid[y]
+        if x > 0 and row[x - 1] == 0:
+            row[x - 1] = -1
+            push((y, x - 1))
+        if x < last_x and row[x + 1] == 0:
+            row[x + 1] = -1
+            push((y, x + 1))
 
     for row in filled_grid:
         for x, value in enumerate(row):
