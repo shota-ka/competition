@@ -1,11 +1,13 @@
 from typing import TypeAlias
 
+import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel, RootModel
 
 app = FastAPI()
 
 Grid: TypeAlias = list[list[int]]
+NUMPY_FILL_THRESHOLD = 64 * 64
 
 
 class TaskData(BaseModel):
@@ -21,8 +23,7 @@ class PredictionResponse(BaseModel):
     predict: list[Grid]
 
 
-def fill_enclosed_area(grid: Grid) -> Grid:
-    """Replace enclosed zeros with 4."""
+def _fill_enclosed_area_python(grid: Grid) -> Grid:
     if not grid or not grid[0]:
         return grid
 
@@ -84,6 +85,45 @@ def fill_enclosed_area(grid: Grid) -> Grid:
                 row[x] = 0
 
     return filled_grid
+
+
+def _fill_enclosed_area_numpy(grid: Grid) -> Grid:
+    if not grid or not grid[0]:
+        return grid
+
+    filled_grid = np.array(grid, dtype=np.int8, copy=True)
+    zeros = filled_grid == 0
+    outside = np.zeros_like(zeros)
+
+    outside[0, :] |= zeros[0, :]
+    outside[-1, :] |= zeros[-1, :]
+    outside[:, 0] |= zeros[:, 0]
+    outside[:, -1] |= zeros[:, -1]
+
+    while True:
+        neighbors = np.zeros_like(outside)
+        neighbors[1:, :] |= outside[:-1, :]
+        neighbors[:-1, :] |= outside[1:, :]
+        neighbors[:, 1:] |= outside[:, :-1]
+        neighbors[:, :-1] |= outside[:, 1:]
+
+        new_outside = zeros & neighbors & ~outside
+        if not new_outside.any():
+            break
+        outside |= new_outside
+
+    filled_grid[zeros & ~outside] = 4
+    return filled_grid.tolist()
+
+
+def fill_enclosed_area(grid: Grid) -> Grid:
+    """Replace enclosed zeros with 4."""
+    if not grid or not grid[0]:
+        return grid
+
+    if len(grid) * len(grid[0]) >= NUMPY_FILL_THRESHOLD:
+        return _fill_enclosed_area_numpy(grid)
+    return _fill_enclosed_area_python(grid)
 
 
 def function(target_data: list[TaskData] | list[dict]) -> list[Grid]:
